@@ -1,0 +1,274 @@
+﻿@page "/"
+@using Microsoft.Extensions.Logging
+@inject ILogger<Index> Logger
+
+<PageTitle>Index</PageTitle>
+<style>
+    h1 {
+        text-align: center;
+    }
+
+    p {
+        text-align: center;
+    }
+
+    h2{
+        text-align: center;
+    }
+
+    h3 {
+        text-align: center;
+    }
+
+    h4 {
+        text-align: center;
+    }
+
+    .numinput {
+        
+        
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .flexitem {
+        margin: 1%;
+    }
+    .buttonfal{
+        background-color: #FF0000;
+    }
+    .buttondef{
+        background-color: green
+    }
+
+
+</style>
+<h1>GPA Calculator</h1>
+<p>Enter the Number of Classes</p>
+<fieldset disabled="@disable">
+    <EditForm class=numinput Model="@num" OnSubmit="ClassSubmit">
+        <InputNumber id="numclasses" @bind-Value="num.Number">
+    
+        </InputNumber>
+        <button class="@buttonclass" type="submit" id="submit">Submit </button>
+    </EditForm>
+</fieldset>
+
+@if (visible)
+{
+    <h2> Enter Class Type, Grade and Credits below</h2>
+    <h4> @classesleft</h4>
+    <fieldset disabled="@disable2">
+        <EditForm class="numinput" Model="@prop" OnSubmit="DataSubmit">
+            <InputRadioGroup @bind-Value="prop.type">
+                @foreach (string type in types)
+                {
+                    <InputRadio Value="type"/> @type
+                    <br />
+                }
+            </InputRadioGroup>
+            <InputSelect @bind-Value="prop.grade">
+                <br />
+                <option value="Select">Select</option>
+                <option value="A+">A+</option>
+                <option value="A">A</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B">B</option>
+                <option value="B-">B-</option>
+                <option value="C+">C+</option>
+                <option value="C">C</option>
+                <option value="C-">C-</option>
+                <option value="D+">D+</option>
+                <option value="D">D</option>
+                <option value="D-">D-</option>
+                <option value="F">F</option>
+            </InputSelect>
+            <br />
+            <InputNumber @bind-Value="prop.credits">
+
+            </InputNumber>
+            <br />
+            <button class="@buttonclass2" type="submit">Submit</button>
+            <br />
+            <button type="button" @onclick="back">Back</button>
+        </EditForm>
+    </fieldset>
+}
+@if (visible2)
+{
+    <h3>Your Weighted GPA is @gpas[0]</h3>
+    <h3>Your Unweighted GPA is @gpas[1]</h3>
+}
+
+@code{
+    double[] gpas = new double[2];
+    List<String> types = new List<String> {"Academic", "Honors", "AP"};
+    private bool visible = false;
+    private bool visible2 = false;
+    private string classesleft = "you have 0 classes left";
+    private string buttonclass = "buttondef";
+    private string buttonclass2 = "buttondef";
+    private NumberInput num = new();
+    private classproperties prop = new();
+    private bool disable = false;
+    private bool disable2 = false;
+    double[,] vals;
+    //array of two arrays. One will be weighted, one will be unweighted
+    string[] grades;
+    double[] credits;
+    string[] type;
+    Dictionary<string, double> academic = new Dictionary<string, double>();
+    Dictionary<string, double> honors = new Dictionary<string, double>();
+    Dictionary<string, double> ap = new Dictionary<string, double>();
+    private void ClassSubmit(){
+        if (num.Number <= 0) 
+        {
+            buttonclass = "buttonfal";
+        }
+        //Logger.LogWarning("numclasses == " + num.Number);
+        //Console.WriteLine("test");
+        else
+        {
+            buttonclass = "buttondef";
+            disable = true;
+            visible = true;
+            classesleft = "you have " + num.Number + " classes left";
+            vals = new double[2, num.Number];
+            grades = new string[num.Number];
+            credits = new double[num.Number];
+            type = new string[num.Number];
+
+            academic.Add("A+", 4.3);
+            academic.Add("A", 4);
+            academic.Add("A-", 3.7);
+            academic.Add("B+", 3.3);
+            academic.Add("B", 3);
+            academic.Add("B-", 2.7);
+            academic.Add("C+", 2.3);
+            academic.Add("C", 2);
+            academic.Add("C-", 1.7);
+            academic.Add("D+", 1.3);
+            academic.Add("D", 1);
+            academic.Add("D-", 0.7);
+            academic.Add("F", 0);
+
+            honors.Add("A+", 4.945);
+            honors.Add("A", 4.6);
+            honors.Add("A-", 4.255);
+            honors.Add("B+", 3.795);
+            honors.Add("B", 3.45);
+            honors.Add("B-", 3.105);
+            honors.Add("C+", 2.645);
+            honors.Add("C", 2.3);
+            honors.Add("C-", 1.955);
+            honors.Add("D+", 1.338);
+            honors.Add("D", 1.15);
+            honors.Add("D-", 0.805);
+            honors.Add("F", 0);
+
+            ap.Add("A+", 5.375);
+            ap.Add("A", 5);
+            ap.Add("A-", 4.625);
+            ap.Add("B+", 4.125);
+            ap.Add("B", 3.75);
+            ap.Add("B-", 3.375);
+            ap.Add("C+", 2.875);
+            ap.Add("C", 2.5);
+            ap.Add("C-", 2.125);
+            ap.Add("D+", 1.625);
+            ap.Add("D", 1.25);
+            ap.Add("D-", 0.875);
+            ap.Add("F", 0);
+        }
+    }
+    private void DataSubmit(){
+        //I needed to add select as the default value of the dropdown because for some reason if you keep the dropdown at it's default value it'll output null for the first submit.
+        if (prop.credits <= 0 || (prop.type != "Academic" && prop.type != "Honors" && prop.type != "AP") || prop.grade == "Select" || prop.grade == null)
+        {
+            buttonclass2 = "buttonfal";
+            //Logger.LogWarning(prop.type);
+        }
+        else
+        {
+            if (num.Number > 0)
+            {
+                buttonclass2 = "buttondef";
+                grades[num.Number - 1] = prop.grade;
+                credits[num.Number - 1] = prop.credits;
+                type[num.Number - 1] = prop.type;
+                num.Number--;
+                classesleft = "you have " + num.Number + " classes left";
+                if (num.Number == 0)
+                {
+                    disable2 = true;
+                    for (int i = 0; i < 2; i++)
+                    {
+                        for (int j = 0; j < grades.Length; j++)
+                        {
+                            if (i == 0)
+                            {
+                                if (type[j] == "Academic")
+                                {
+                                    vals[i, j] = academic[grades[j]] * credits[j];
+                                    //Logger.LogWarning("A+ acad is " + academic["A+"]);
+                                    //Logger.LogWarning("A+ hon is " + honors["A+"]);
+                                    //Logger.LogWarning("A+ ap is " + ap["A+"]);
+                                }
+                                else if (type[j] == "Honors")
+                                {
+                                    vals[i, j] = honors[grades[j]] * credits[j];
+                                    //Logger.LogWarning("A+ acad is " + academic["A+"]);
+                                    //Logger.LogWarning("A+ hon is " + honors["A+"]);
+                                    //Logger.LogWarning("A+ ap is " + ap["A+"]);
+                                }
+                                else if (type[j] == "AP")
+                                {
+                                    vals[i, j] = ap[grades[j]] * credits[j];
+                                    //LogWarning("A+ acad is " + academic["A+"]);
+                                    //Logger.LogWarning("A+ hon is " + honors["A+"]);
+                                    //Logger.LogWarning("A+ ap is " + ap["A+"]);
+                                    //Logger.LogWarning("A+ acad is " + academic["A"]);
+                                    //Logger.LogWarning("A+ hon is " + honors["A"]);
+                                    //Logger.LogWarning("A+ ap is " + ap["A"]);
+                                }
+                            }
+                            else
+                            {
+                                academic["A+"] = 4;
+                                vals[i, j] = academic[grades[j]] * credits[j];
+                            }
+                        }
+                    }
+                    double sum = credits.Sum();
+                    double valsum = 0;
+
+                    for (int j = 0; j < 2; j++)
+                    {
+                        valsum = 0;
+                        for (int i = 0; i < grades.Length; i++)
+                        {
+                            valsum += vals[j, i];
+                        }
+                        gpas[j] = valsum / sum;
+                    }
+                    visible2 = true;
+
+                }
+            }
+            else
+            {
+                disable2 = true;
+            }
+            //Logger.LogWarning(prop.type);
+        }
+    }
+    private void back()
+    {
+        if (num.Number < grades.Length)
+        {
+            num.Number += 1;
+            classesleft = "you have " + num.Number + " classes left";
+        }
+    }
+}
